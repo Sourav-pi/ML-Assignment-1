@@ -36,6 +36,7 @@ def NMAE(y_pred,y_real):
         numerator+=abs(y_real[i,0]-y_pred[i,0])
         denominator+=abs(y_real[i,0]-y_mean)
     return numerator/denominator
+
 # Normalized Mean Squared Error
 def NMSE(y_pred,y_real):
     y_mean = np.mean(y_real)
@@ -58,12 +59,12 @@ def get_X_y(data,target_col=None):
     return (X,y)
 
 def train(X, y, l):
-   
     cols = X.shape[1]
     R = np.eye(cols)
     R[0, 0] = 0
     w = np.linalg.inv(X.T @ X + l * R) @ X.T @ y
     return w
+
 def predict(X,w):
     return X @ w
 

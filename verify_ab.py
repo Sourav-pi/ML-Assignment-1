@@ -26,7 +26,7 @@ import pandas as pd
 from sklearn.linear_model import LinearRegression, Ridge
 
 import part_a_dev
-import part_b
+import submission.part_b as part_b
 
 TRAIN_CSV = "PartaData/e4_hr_train_downsampled.csv"
 N_ROWS = int(sys.argv[1]) if len(sys.argv) > 1 else 5000

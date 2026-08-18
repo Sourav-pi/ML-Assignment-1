@@ -7,3 +7,6 @@
 .vscode
 .claude
 __pycache__
+*.log
+*.aux
+*.out

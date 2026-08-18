@@ -36,7 +36,6 @@ help:
 	@echo "make eval-a                     run the official eval/eval_a.py evaluator on part_a.py"
 	@echo "make eval-b                     run the official eval/eval_b.py evaluator on part_b.py"
 	@echo "make eval-c                     run the official eval/eval_c.py evaluator on part_c.py"
-	@echo "                                (part_c.py doesn't exist in this repo yet)"
 	@echo "make eval-d1 | -d2 | -d3        run the official eval/eval_d.py evaluator (builds model+features first)"
 	@echo "make eval                       eval-a + eval-d1 + eval-d2 + eval-d3 (eval-b/-c excluded: see above)"
 	@echo "make clean                      remove generated out/ (models + feature files)"
@@ -126,9 +125,7 @@ eval-b: part_b.py
 	echo "[eval-b] wall time: $$(($$(date +%s) - start))s"; \
 	exit $$status
 
-# eval-c: same train/test CSVs as (a)/(b) per the PDF. part_c.py doesn't
-# exist in this repo yet -- this target will fail with "No rule to make
-# target 'part_c.py'" until it's added.
+# eval-c: same train/test CSVs as (a)/(b) per the PDF.
 eval-c: part_c.py
 	@start=$$(date +%s); \
 	$(PYTHON) eval/eval_c.py part_c.py $(DATA_A)/e4_hr_train_downsampled.csv $(DATA_A)/e4_hr_test_downsampled.csv; \
