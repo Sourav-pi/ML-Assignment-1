@@ -1,2 +1,7 @@
 /PartdData
+/out
 .DS_Store
+.vscode
+.claude
+/PartaData
+__pycache__
