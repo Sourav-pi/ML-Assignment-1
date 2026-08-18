@@ -10,7 +10,6 @@ def load_data(train_path, test_path, folds_path, reg_path):
         text = file.read()
     array_string = text.split('[')[1].split(']')[0]
     fold_ends = [int(num) for num in array_string.split(',')]
-    # ---------------------------------
     
     # Reconstruct the row-by-row folds array based on endpoints
     n_samples = train_data.shape[0]
@@ -83,12 +82,9 @@ def main():
     cv_errors_path = sys.argv[8]
     train_df, test_df, folds, lambdas = load_data(train_path, test_path, folds_path, reg_path)
 
-    # 3. Preprocess Data using the custom get_X_y function
-    # Target 'hr' is present in train, absent in test[cite: 1]
     X_train, y_train = get_X_y(train_df, target_col='hr')
     X_test, _ = get_X_y(test_df)
 
-    # 4.loop on lambda values
     cv_results = []
     best_lambda = None
     min_cv_nmse = float('inf')
@@ -96,38 +92,29 @@ def main():
     for l in lambdas:
         fold_errors = []
         for k in range(5):
-            # Partition the data based on fold indices
             train_idx = (folds != k)
             val_idx = (folds == k)
             
             X_train_cv, y_train_cv = X_train[train_idx], y_train[train_idx]
             X_val_cv, y_val_cv = X_train[val_idx], y_train[val_idx]
             
-            # Train on 4 folds, predict on 1 fold
             w_cv = train(X_train_cv, y_train_cv, l)
             y_pred_cv = predict(X_val_cv, w_cv)
             
-            # Calculate fold-wise NMSE
             nmse_k = NMSE(y_pred_cv, y_val_cv)
             fold_errors.append(nmse_k)
             
-        # Overall five-fold cross-validation error
         cv_nmse = np.mean(fold_errors)
         cv_results.append((l, cv_nmse))
         
-        # Select the best lambda (strictly less than ensures the first one is picked on a tie)[cite: 1]
         if cv_nmse < min_cv_nmse:
             min_cv_nmse = cv_nmse
             best_lambda = l
 
-    # 5. Retrain on complete dataset with the selected best lambda[cite: 1]
     w_final = train(X_train, y_train, best_lambda)
     
-    # 6. Predict on test dataset
     y_test_pred = predict(X_test, w_final)
 
-    # 7. Write Outputs[cite: 1]
-    # Write predictions
     np.savetxt(pred_path, y_test_pred, fmt='%.16f')
 
     # Write weights
@@ -137,7 +124,7 @@ def main():
     with open(best_lambda_path, 'w') as f:
         f.write(f"{best_lambda}\n")
         
-    # Write cross-validation errors as comma-separated pairs[cite: 1]
+    # Write cross-validation errors as comma-separated pairs
     with open(cv_errors_path, 'w') as f:
         for l, err in cv_results:
             f.write(f"{l},{err:f}\n")

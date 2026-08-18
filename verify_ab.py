@@ -25,7 +25,7 @@ import numpy as np
 import pandas as pd
 from sklearn.linear_model import LinearRegression, Ridge
 
-import part_a
+import part_a_dev
 import part_b
 
 TRAIN_CSV = "PartaData/e4_hr_train_downsampled.csv"
@@ -56,8 +56,8 @@ def main():
     df = load_subset(N_ROWS)
 
     # --- Part (a): OLS ---
-    X_aug, y = part_a.get_X_y(df, target_col="hr")
-    w_manual = part_a.train(X_aug, y)
+    X_aug, y = part_a_dev.get_X_y(df, target_col="hr")
+    w_manual = part_a_dev.train(X_aug, y)
 
     X_raw = df.drop(columns=["hr"]).to_numpy()
     y_flat = df["hr"].to_numpy()

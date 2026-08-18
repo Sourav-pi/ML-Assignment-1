@@ -7,6 +7,28 @@ def load_test_train(traindata_filepath,testdata_filepath):
     test_data = pd.read_csv(testdata_filepath)
     return (train_data,test_data)
 
+# Normalized Mean Absolute Error
+def NMAE(y_pred,y_real):
+    y_mean = np.mean(y_real)
+    n = y_real.shape[0]
+    numerator = 0
+    denominator = 0
+    for i in range(n):
+        numerator+=abs(y_real[i,0]-y_pred[i,0])
+        denominator+=abs(y_real[i,0]-y_mean)
+    return numerator/denominator
+
+# Normalized Mean Squared Error
+def NMSE(y_pred,y_real):
+    y_mean = np.mean(y_real)
+    n = y_real.shape[0]
+    numerator = 0
+    denominator = 0
+    for i in range(n):
+        numerator+=(y_real[i,0]-y_pred[i,0])**2
+        denominator+=(y_real[i,0]-y_mean)**2
+    return numerator/denominator
+
 def get_X_y(data,target_col=None):
     X = data.to_numpy()
     y = None

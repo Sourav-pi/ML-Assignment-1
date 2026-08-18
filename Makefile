@@ -22,13 +22,16 @@ D3_TEST_SUBJECTS  := c1s04 c2s03
         eval-a eval-b eval-c eval-d1 eval-d2 eval-d3 eval
 
 help:
-	@echo "make d1 | d2 | d3               train + build test features for one protocol"
+	@echo "part_d.py is the lean submission file (train/feature_engineering only)."
+	@echo "part_d_dev.py is the working copy with diagnose/inspect/compare added."
+	@echo ""
+	@echo "make d1 | d2 | d3               train + build test features for one protocol (part_d.py)"
 	@echo "make all                        do all three protocols"
 	@echo "make diagnose-d1 | -d2 | -d3    train with correlation printing + NMAE/NMSE vs. median baseline"
-	@echo "                                (dev-only: needs the dev test dir's glucose field)"
+	@echo "                                (part_d_dev.py, dev-only: needs the dev test dir's glucose field)"
 	@echo "make compare-d1 | -d2 | -d3     compare Ridge vs. Lasso vs. ElasticNet on identical features"
-	@echo "                                (dev-only: needs the dev test dir's glucose field)"
-	@echo "make inspect-d1 | -d2 | -d3     print trained model's per-feature medians"
+	@echo "                                (part_d_dev.py, dev-only: needs the dev test dir's glucose field)"
+	@echo "make inspect-d1 | -d2 | -d3     print trained model's per-feature medians (part_d_dev.py)"
 	@echo "make d3-data                    (re)build the train_d3/test_d3 symlink dirs from train_set/test_set"
 	@echo "make eval-a                     run the official eval/eval_a.py evaluator on part_a.py"
 	@echo "make eval-b                     run the official eval/eval_b.py evaluator on part_b.py"
@@ -57,23 +60,28 @@ $(OUT)/features_%.npy: $(OUT)/model_%.pkl part_d.py | $(OUT)
 	$(PYTHON) part_d.py feature_engineering $* $(TEST_DIR_$*) $(OUT)/model_$*.pkl $@
 
 # Dev-only diagnostics (not the graded train/feature_engineering interface).
+# part_d.py is the lean submission file (train/feature_engineering only, no
+# diagnose subcommand) -- these targets run against part_d_dev.py instead,
+# the working copy that still has diagnose/inspect/compare. Keep the two
+# files' feature-engineering logic in sync manually if part_d_dev.py changes.
+#
 # diagnose-% always re-runs (PHONY): trains fresh with correlation printing
 # on, then reports NMAE/NMSE vs. a median-training-target baseline using the
 # *dev* test dir's glucose field. Point TEST_DIR_% at a real held-out test
 # set (no glucose) and this will fail -- that's intentional.
-diagnose-d1 diagnose-d2 diagnose-d3: diagnose-%: part_d.py | $(OUT)
-	$(PYTHON) part_d.py diagnose eval $* $(TRAIN_DIR_$*) $(TEST_DIR_$*) $(OUT)/model_$*.pkl
+diagnose-d1 diagnose-d2 diagnose-d3: diagnose-%: part_d_dev.py | $(OUT)
+	$(PYTHON) part_d_dev.py diagnose eval $* $(TRAIN_DIR_$*) $(TEST_DIR_$*) $(OUT)/model_$*.pkl
 
 # compare-%: same dev-test-glucose requirement as diagnose-%, but fits
 # Ridge/Lasso/ElasticNet on identical features and reports all three --
 # saves no model file, purely a comparison.
-compare-d1 compare-d2 compare-d3: compare-%: part_d.py
-	$(PYTHON) part_d.py diagnose compare $* $(TRAIN_DIR_$*) $(TEST_DIR_$*)
+compare-d1 compare-d2 compare-d3: compare-%: part_d_dev.py
+	$(PYTHON) part_d_dev.py diagnose compare $* $(TRAIN_DIR_$*) $(TEST_DIR_$*)
 
 # inspect-% reuses the normal model_%.pkl target -- builds it first if
 # missing/stale, otherwise just inspects what's already there.
 inspect-d1 inspect-d2 inspect-d3: inspect-%: $(OUT)/model_%.pkl
-	$(PYTHON) part_d.py diagnose inspect $(OUT)/model_$*.pkl
+	$(PYTHON) part_d_dev.py diagnose inspect $(OUT)/model_$*.pkl
 
 # d3's train/test dirs aren't shipped directly -- train_set/test_set are laid
 # out for d2 (same participant, earlier vs. later segment). This rebuilds the
