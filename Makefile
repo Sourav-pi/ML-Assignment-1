@@ -1,6 +1,7 @@
 PYTHON ?= /opt/miniconda3/bin/python3
 DATA   ?= PartdData
 DATA_A ?= PartaData
+DATA_B ?= PartbData
 OUT    ?= out
 
 TRAIN_DIR_d1 := $(DATA)/random_train
@@ -18,7 +19,7 @@ D3_TEST_SUBJECTS  := c1s04 c2s03
         diagnose-d1 diagnose-d2 diagnose-d3 \
         inspect-d1 inspect-d2 inspect-d3 \
         compare-d1 compare-d2 compare-d3 \
-        eval-a eval-d1 eval-d2 eval-d3 eval
+        eval-a eval-b eval-c eval-d1 eval-d2 eval-d3 eval
 
 help:
 	@echo "make d1 | d2 | d3               train + build test features for one protocol"
@@ -30,8 +31,11 @@ help:
 	@echo "make inspect-d1 | -d2 | -d3     print trained model's per-feature medians"
 	@echo "make d3-data                    (re)build the train_d3/test_d3 symlink dirs from train_set/test_set"
 	@echo "make eval-a                     run the official eval/eval_a.py evaluator on part_a.py"
+	@echo "make eval-b                     run the official eval/eval_b.py evaluator on part_b.py"
+	@echo "make eval-c                     run the official eval/eval_c.py evaluator on part_c.py"
+	@echo "                                (part_c.py doesn't exist in this repo yet)"
 	@echo "make eval-d1 | -d2 | -d3        run the official eval/eval_d.py evaluator (builds model+features first)"
-	@echo "make eval                       eval-a + eval-d1 + eval-d2 + eval-d3"
+	@echo "make eval                       eval-a + eval-d1 + eval-d2 + eval-d3 (eval-b/-c excluded: see above)"
 	@echo "make clean                      remove generated out/ (models + feature files)"
 	@echo ""
 	@echo "override on the command line if needed, e.g.:"
@@ -90,12 +94,10 @@ d3-data:
 
 # Official evaluator scripts (eval/eval_*.py) -- these are the graders'
 # own checkers, separate from the dev-only diagnose-%/compare-%/inspect-%
-# targets above. eval_b.py/eval_c.py aren't wired up yet: part_b.py,
-# part_c.py, and their train/public_test/folds/regularization data don't
-# exist in this repo yet.
+# targets above.
 #
-# Both targets below wrap the eval invocation with a wall-clock timer so
-# you can read off actual elapsed seconds -- eval_a.py/eval_d.py already
+# All eval-* targets below wrap the eval invocation with a wall-clock timer
+# so you can read off actual elapsed seconds -- eval_a.py/eval_d.py already
 # enforce the PDF's time limit internally (eval_a.py fails the subprocess
 # past --timeout) but only report pass/fail, not how much margin you had.
 eval-a: part_a.py
@@ -103,6 +105,27 @@ eval-a: part_a.py
 	$(PYTHON) eval/eval_a.py part_a.py $(DATA_A)/e4_hr_train_downsampled.csv $(DATA_A)/e4_hr_test_downsampled.csv; \
 	status=$$?; \
 	echo "[eval-a] wall time: $$(($$(date +%s) - start))s"; \
+	exit $$status
+
+# eval-b: PartbData/ holds folds.txt + regularization.txt, with the
+# train/test CSVs symlinked in from PartaData/ (part (b) uses the same
+# 1640-feature/hr schema and the PDF explicitly says to reuse part (a)'s
+# feature representation, so no need to duplicate the ~1.5GB of CSVs).
+eval-b: part_b.py
+	@start=$$(date +%s); \
+	$(PYTHON) eval/eval_b.py part_b.py $(DATA_B)/e4_hr_train_downsampled.csv $(DATA_B)/e4_hr_test_downsampled.csv $(DATA_B)/folds.txt $(DATA_B)/regularization.txt; \
+	status=$$?; \
+	echo "[eval-b] wall time: $$(($$(date +%s) - start))s"; \
+	exit $$status
+
+# eval-c: same train/test CSVs as (a)/(b) per the PDF. part_c.py doesn't
+# exist in this repo yet -- this target will fail with "No rule to make
+# target 'part_c.py'" until it's added.
+eval-c: part_c.py
+	@start=$$(date +%s); \
+	$(PYTHON) eval/eval_c.py part_c.py $(DATA_A)/e4_hr_train_downsampled.csv $(DATA_A)/e4_hr_test_downsampled.csv; \
+	status=$$?; \
+	echo "[eval-c] wall time: $$(($$(date +%s) - start))s"; \
 	exit $$status
 
 # eval-d%: always reruns train + feature_engineering from scratch (PHONY,

@@ -1229,6 +1229,23 @@ def cmd_train(protocol, train_dir, model_path, show_correlations=False, top_n=15
     coef_raw = coef_scaled / scaler.scale_
     intercept_raw = model.intercept_ - np.sum(coef_scaled * scaler.mean_ / scaler.scale_)
 
+    if show_correlations:
+        # Report requirement (page 11, "Top five features"): importance must
+        # be the |coef| *after standardizing features*, not raw |coef_raw| --
+        # raw coefficients are scale-dependent (a feature with a tiny natural
+        # std gets an inflated raw coefficient for the same standardized-space
+        # effect, which is exactly what made eval_d.py's own raw-|coef| "top
+        # features" printout misleading for d1: bvp_slope/bvp_wavelet_energy_l1
+        # topped it purely from having near-zero natural scale, not real
+        # importance). coef_scaled here *is* the correctly standardized
+        # coefficient already computed above, before the raw-scale conversion
+        # cmd_train must do for the saved pickle.
+        order = np.argsort(-np.abs(coef_scaled))[:top_n]
+        print(f"=== top {top_n} features by |standardized coef| (for report) ===")
+        for i in order:
+            print(f"{feature_names[i]:30s} std_coef={coef_scaled[i]:+10.4f}")
+        print()
+
     state = {
         "format_version": FORMAT_VERSION,
         "protocol": protocol,
